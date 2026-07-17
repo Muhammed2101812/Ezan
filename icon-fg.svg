@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="amberGrad" gradientUnits="userSpaceOnUse" x1="118" y1="118" x2="394" y2="394">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="28%" stop-color="#FCD34D"/>
+      <stop offset="62%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="44%" r="42%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.40"/>
+      <stop offset="55%" stop-color="#F59E0B" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hubGrad" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="55%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Transparent background (Android adaptive foreground) -->
+  <!-- Soft amber halo behind the dial -->
+  <circle cx="256" cy="256" r="150" fill="url(#glowGrad)"/>
+
+  <!-- Crescent-shaped clock dial: 270° arc, opening at bottom -->
+  <path d="M 166 346 A 132 132 0 1 1 346 346"
+        fill="none" stroke="url(#amberGrad)" stroke-width="40" stroke-linecap="round"/>
+
+  <!-- Single hand pointing to ~1 o'clock (time + Qibla pointer) -->
+  <line x1="256" y1="256" x2="310" y2="182"
+        stroke="url(#amberGrad)" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Center hub with specular highlight -->
+  <circle cx="256" cy="256" r="16" fill="url(#hubGrad)"/>
+  <circle cx="251" cy="251" r="5" fill="#FFFBEB" fill-opacity="0.75"/>
+</svg>

@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vakit - Lite Ezan Vakti</title>
+    <!-- Tailwind CSS (local, offline) -->
+    <script src="js/tailwind.js"></script>
+    <!-- Fonts (local, offline — Inter + JetBrains Mono, latin + latin-ext subsets) -->
+    <link rel="stylesheet" href="css/fonts.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-timer {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar for beautiful lists */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 99px;
+        }
+        /* Dynamic theme smooth transitions */
+        .theme-transition {
+            transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-0 md:p-4 overflow-x-hidden">
+
+    <!-- App Container wrapped in a mock mobile device perspective on desktop, fluid full screen on mobile -->
+    <div class="w-full max-w-md min-h-screen md:min-h-[850px] md:max-h-[900px] md:rounded-[40px] shadow-2xl overflow-hidden relative theme-transition flex flex-col justify-between bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-950 border border-white/5">
+        
+        <!-- Stars layer for night/twilight themes -->
+        <div id="stars-container" class="absolute inset-0 opacity-35 pointer-events-none overflow-hidden">
+            <!-- Stars will be injected or visible based on active theme -->
+        </div>
+
+        <!-- Header Section -->
+        <header class="z-10 px-6 pt-6 pb-2 flex items-center justify-between backdrop-blur-sm bg-black/5">
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="toggleCityDrawer(true)">
+                <div class="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-all shadow-lg border border-white/10">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-1">
+                        <h1 id="header-city" class="text-lg font-bold tracking-tight">İstanbul</h1>
+                        <svg class="w-4 h-4 text-white/60 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <p id="header-hijri" class="text-xs text-white/60">Yükleniyor...</p>
+                </div>
+            </div>
+
+            <!-- Sound Toggle and Toast Notification Anchor -->
+            <button onclick="toggleSound()" id="sound-btn" class="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 transition-all border border-white/10" title="Sesli Bildirim">
+                <svg id="sound-icon-on" class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <svg id="sound-icon-off" class="w-5 h-5 text-white/40 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Elegant Custom Toast Notifications -->
+        <div id="toast-notification" class="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-white/10 backdrop-blur-md text-white text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 transition-all duration-300 opacity-0 pointer-events-none">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="toast-text">Bildirim Mesajı</span>
+        </div>
+
+        <!-- Main Scrollable Body -->
+        <main class="flex-1 overflow-y-auto px-6 py-4 z-10 scroll-smooth flex flex-col justify-center">
+            
+            <!-- VIEW 1: MAIN PRAYER TIMES & COUNTDOWN -->
+            <section id="view-times" class="space-y-6">
+                
+                <!-- Countdown & Time Display -->
+                <div class="text-center py-4 space-y-2 relative">
+                    <!-- Subtle ambient aura in background -->
+                    <div class="absolute inset-0 bg-amber-500/10 blur-3xl rounded-full scale-75 -z-10"></div>
+                    
+                    <p id="next-prayer-label" class="text-xs uppercase tracking-widest text-amber-400 font-semibold">Sonraki Vakit Yükleniyor</p>
+                    
+                    <div id="countdown-timer" class="text-4xl md:text-5xl font-extrabold font-timer tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-amber-200">
+                        00:00:00
+                    </div>
+
+                    <div class="text-lg font-medium text-white/80 flex items-center justify-center space-x-2">
+                        <span id="clock-display" class="font-timer font-semibold bg-white/5 px-2.5 py-0.5 rounded-lg border border-white/5">12:34:56</span>
+                        <span class="text-xs text-white/40">•</span>
+                        <span id="gregorian-date" class="text-xs text-white/60">17 Temmuz Cuma</span>
+                    </div>
+
+                    <!-- Progress Bar across Current Interval -->
+                    <div class="w-full max-w-[280px] mx-auto mt-4">
+                        <div class="flex justify-between text-[10px] text-white/40 mb-1 px-1">
+                            <span id="progress-start">İmsak</span>
+                            <span id="progress-percent">0%</span>
+                            <span id="progress-end">Güneş</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid of 6 Prayer Times -->
+                <div class="grid grid-cols-2 gap-3.5" id="prayer-grid">
+                    <!-- Imsak Card -->
+                    <div id="card-Fajr" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">İmsak</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">Fecr</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Fajr" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Fajr" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+
+                    <!-- Gunes Card -->
+                    <div id="card-Sunrise" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">Güneş</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">Şuruk</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Sunrise" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Sunrise" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+
+                    <!-- Ogle Card -->
+                    <div id="card-Dhuhr" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">Öğle</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">Zuhr</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Dhuhr" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Dhuhr" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+
+                    <!-- Ikindi Card -->
+                    <div id="card-Asr" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">İkindi</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">Asr</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 9a3 3 0 100 6 3 3 0 000-6z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Asr" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Asr" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+
+                    <!-- Aksam Card -->
+                    <div id="card-Maghrib" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">Akşam</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">Mağrib</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 11a1 1 0 100 2 1 1 0 000-2z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Maghrib" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Maghrib" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+
+                    <!-- Yatsi Card -->
+                    <div id="card-Isha" class="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-base text-white/90">Yatsı</h3>
+                                <p class="text-[10px] text-white/40 uppercase tracking-wider">İşa</p>
+                            </div>
+                            <span class="text-white/30 text-xl">
+                                <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-baseline">
+                            <span id="time-Isha" class="text-2xl font-bold font-timer tracking-tight">00:00</span>
+                            <span id="badge-Isha" class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-semibold uppercase tracking-wider scale-90 opacity-0 transition-opacity">Şimdi</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: MONTHLY IMSAKIYE TABLE -->
+            <section id="view-calendar" class="hidden flex flex-col space-y-4">
+                <div class="text-center">
+                    <h2 class="text-xl font-bold tracking-tight">Aylık İmsakiye</h2>
+                    <p id="calendar-subtitle" class="text-xs text-white/50 mt-1">Temmuz 2026 İmsakiye Vakitleri</p>
+                </div>
+
+                <!-- Scrollable Table -->
+                <div class="flex-1 overflow-y-auto max-h-[460px] border border-white/5 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-md">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/10 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/70">
+                                <th class="py-3 px-3 text-center">Gün</th>
+                                <th class="py-3 px-2">İmsak</th>
+                                <th class="py-3 px-2">Güneş</th>
+                                <th class="py-3 px-2">Öğle</th>
+                                <th class="py-3 px-2">İkindi</th>
+                                <th class="py-3 px-2">Akşam</th>
+                                <th class="py-3 px-2">Yatsı</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-table-body" class="divide-y divide-white/5 text-xs text-white/85">
+                            <!-- Dynamic Row items injected here -->
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-white/40">Vakitler yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- VIEW 4: SETTINGS AND PREFERENCES -->
+            <section id="view-settings" class="hidden space-y-4 py-4">
+                <div class="text-center">
+                    <h2 class="text-xl font-bold tracking-tight">Ayarlar</h2>
+                    <p class="text-xs text-white/50 mt-1">Uygulama tercihlerini özelleştirin</p>
+                </div>
+
+                <div class="space-y-3.5">
+                    <!-- Audio notification section -->
+                    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3.5">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Sesli Hatırlatıcı</h3>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium">Ezan Vakti Sesi</p>
+                                <p class="text-xs text-white/40">Vakit girdiğinde hafif gong sesi çal</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="settings-sound-toggle" onchange="toggleSoundCheckbox()" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400"></div>
+                            </label>
+                        </div>
+                        
+                        <button onclick="testAudioChime()" class="w-full py-2 px-4 bg-white/5 hover:bg-white/10 active:scale-[0.98] transition border border-white/10 rounded-xl text-xs font-semibold text-center flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Test Bildirim Sesi</span>
+                        </button>
+                    </div>
+
+                    <!-- Calculation Methods -->
+                    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3.5">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Hesaplama Metodu</h3>
+                        <div>
+                            <select id="settings-method" onchange="changeCalcMethod(this.value)" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white/90 focus:outline-none focus:border-amber-400">
+                                <option value="13" selected>Türkiye - Diyanet İşleri Başkanlığı</option>
+                                <option value="3">Mısır Genel Araştırma Kurulu</option>
+                                <option value="2">Kuzey Amerika İslam Cemiyeti (ISNA)</option>
+                                <option value="4">Mekke - Ümmü'l-Kurra Üniversitesi</option>
+                                <option value="1">Müslüman Dünya Birliği (MWL)</option>
+                                <option value="12">Fransa - UOIF Yöntemi (12 Derece)</option>
+                            </select>
+                        </div>
+                        <p class="text-[10px] text-white/30 leading-relaxed">Türkiye için Diyanet İşleri Başkanlığı yöntemi (Metot 13) önerilir. Uluslararası şehirler için diğer yöntemleri seçebilirsiniz.</p>
+                    </div>
+
+                    <!-- Offset adjustments if desired -->
+                    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Vakit İnce Ayarı</h3>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-white/70">İmsak Düzeltmesi (Dk)</span>
+                            <input type="number" id="offset-fajr" value="0" onchange="saveOffset('Fajr', this.value)" class="w-16 bg-slate-900 border border-white/10 rounded-lg text-center py-1">
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-white/70">Akşam Düzeltmesi (Dk)</span>
+                            <input type="number" id="offset-maghrib" value="0" onchange="saveOffset('Maghrib', this.value)" class="w-16 bg-slate-900 border border-white/10 rounded-lg text-center py-1">
+                        </div>
+                        <p class="text-[10px] text-white/30">Cihazınızın saatiyle yerel cami vakitleri arasında fark varsa manuel ayarlama yapabilirsiniz.</p>
+                    </div>
+
+                    <!-- Cache clearing and version -->
+                    <div class="p-3 text-center space-y-1.5">
+                        <div class="inline-flex items-center space-x-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider uppercase mx-auto mb-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Sürekli Senkronize</span>
+                        </div>
+                        <p class="text-[10px] text-white/30 leading-normal px-4">
+                            Bu uygulama statik veri barındırmaz. Cihazınızın tarihine göre Aladhan API bulut motorundan anlık olarak güncellenir. Artık yıllarda ve yaz/kış saati uygulamalarında otomatik adapte olur.
+                        </p>
+                        <p class="text-[10px] text-white/20 pt-1">Vakit App v1.2.1 • Açık Kaynak MVP</p>
+                        <button onclick="clearCache()" class="text-[10px] text-red-400/60 hover:text-red-400 transition underline">Yerel Önbelleği Sıfırla</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer Navigation Menu -->
+        <nav class="z-10 bg-slate-950/80 backdrop-blur-md border-t border-white/5 px-6 py-4 flex justify-around">
+            <!-- Nav Item 1: Times -->
+            <button onclick="switchTab('times')" id="tab-times" class="flex flex-col items-center space-y-1 transition text-amber-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-[10px] font-bold">Vakitler</span>
+            </button>
+
+            <!-- Nav Item 2: Calendar -->
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="flex flex-col items-center space-y-1 transition text-white/40 hover:text-white/80">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-[10px] font-bold">İmsakiye</span>
+            </button>
+
+            <!-- Nav Item 3: Settings -->
+            <button onclick="switchTab('settings')" id="tab-settings" class="flex flex-col items-center space-y-1 transition text-white/40 hover:text-white/80">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="text-[10px] font-bold">Ayarlar</span>
+            </button>
+        </nav>
+
+        <!-- Drawer Panel for Selecting Cities -->
+        <div id="city-drawer" class="absolute inset-0 z-40 bg-slate-950/98 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 translate-y-full">
+            <div class="p-6 space-y-5 flex-1 flex flex-col overflow-hidden">
+                <!-- Close Button & Title -->
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-extrabold tracking-tight">Konum Seç</h2>
+                    <button onclick="toggleCityDrawer(false)" class="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Fast Switch Quick Selection Cities (Hızlı Şehirler) -->
+                <div>
+                    <p class="text-[11px] font-bold text-white/40 uppercase tracking-wider mb-2">Hızlı Şehirler</p>
+                    <div class="flex flex-wrap gap-2" id="quick-cities">
+                        <!-- Will dynamically populate major cities -->
+                    </div>
+                </div>
+
+                <!-- Custom Search Input -->
+                <div class="relative">
+                    <input type="text" id="city-search" oninput="filterCities(this.value)" placeholder="Şehir adı ara... (Örn: İstanbul)" class="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <button id="global-search-btn" onclick="triggerGlobalSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-300 transition-all hidden">
+                        Global Ara
+                    </button>
+                </div>
+
+                <!-- Scrollable City List -->
+                <div class="flex-1 overflow-y-auto space-y-1.5" id="filtered-city-list">
+                    <!-- City rows generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Custom International Search Instructions -->
+            <div class="p-6 bg-white/5 border-t border-white/5 text-xs text-white/40 leading-relaxed">
+                Yalnızca Türkiye değil, dünya şehirlerini de aratabilirsiniz. Listede olmayan küresel bir şehir için kutucuğa şehir adını İngilizce yazıp "Global Ara"ya tıklayınız.
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONSTANTS & DATABASE ---
+        const TURKISH_CITIES = [
+            { name: "Adana", query: "Adana", country: "Turkey" },
+            { name: "Adıyaman", query: "Adiyaman", country: "Turkey" },
+            { name: "Afyonkarahisar", query: "Afyonkarahisar", country: "Turkey" },
+            { name: "Ağrı", query: "Agri", country: "Turkey" },
+            { name: "Amasya", query: "Amasya", country: "Turkey" },
+            { name: "Ankara", query: "Ankara", country: "Turkey" },
+            { name: "Antalya", query: "Antalya", country: "Turkey" },
+            { name: "Artvin", query: "Artvin", country: "Turkey" },
+            { name: "Aydın", query: "Aydin", country: "Turkey" },
+            { name: "Balıkesir", query: "Balikesir", country: "Turkey" },
+            { name: "Bilecik", query: "Bilecik", country: "Turkey" },
+            { name: "Bingöl", query: "Bingol", country: "Turkey" },
+            { name: "Bitlis", query: "Bitlis", country: "Turkey" },
+            { name: "Bolu", query: "Bolu", country: "Turkey" },
+            { name: "Burdur", query: "Burdur", country: "Turkey" },
+            { name: "Bursa", query: "Bursa", country: "Turkey" },
+            { name: "Çanakkale", query: "Canakkale", country: "Turkey" },
+            { name: "Çankırı", query: "Cankiri", country: "Turkey" },
+            { name: "Çorum", query: "Corum", country: "Turkey" },
+            { name: "Denizli", query: "Denizli", country: "Turkey" },
+            { name: "Diyarbakır", query: "Diyarbakir", country: "Turkey" },
+            { name: "Edirne", query: "Edirne", country: "Turkey" },
+            { name: "Elazığ", query: "Elazig", country: "Turkey" },
+            { name: "Erzincan", query: "Erzincan", country: "Turkey" },
+            { name: "Erzurum", query: "Erzurum", country: "Turkey" },
+            { name: "Eskişehir", query: "Eskisehir", country: "Turkey" },
+            { name: "Gaziantep", query: "Gaziantep", country: "Turkey" },
+            { name: "Giresun", query: "Giresun", country: "Turkey" },
+            { name: "Gümüşhane", query: "Gumushane", country: "Turkey" },
+            { name: "Hakkari", query: "Hakkari", country: "Turkey" },
+            { name: "Hatay", query: "Hatay", country: "Turkey" },
+            { name: "Isparta", query: "Isparta", country: "Turkey" },
+            { name: "Mersin", query: "Mersin", country: "Turkey" },
+            { name: "İstanbul", query: "Istanbul", country: "Turkey" },
+            { name: "İzmir", query: "Izmir", country: "Turkey" },
+            { name: "Kars", query: "Kars", country: "Turkey" },
+            { name: "Kastamonu", query: "Kastamonu", country: "Turkey" },
+            { name: "Kayseri", query: "Kayseri", country: "Turkey" },
+            { name: "Kırklareli", query: "Kirklareli", country: "Turkey" },
+            { name: "Kırşehir", query: "Kirsehir", country: "Turkey" },
+            { name: "Kocaeli", query: "Kocaeli", country: "Turkey" },
+            { name: "Konya", query: "Konya", country: "Turkey" },
+            { name: "Kütahya", query: "Kutahya", country: "Turkey" },
+            { name: "Malatya", query: "Malatya", country: "Turkey" },
+            { name: "Manisa", query: "Manisa", country: "Turkey" },
+            { name: "Kahramanmaraş", query: "Kahramanmaras", country: "Turkey" },
+            { name: "Mardin", query: "Mardin", country: "Turkey" },
+            { name: "Muğla", query: "Mugla", country: "Turkey" },
+            { name: "Muş", query: "Mus", country: "Turkey" },
+            { name: "Nevşehir", query: "Nevsehir", country: "Turkey" },
+            { name: "Niğde", query: "Nigde", country: "Turkey" },
+            { name: "Ordu", query: "Ordu", country: "Turkey" },
+            { name: "Rize", query: "Rize", country: "Turkey" },
+            { name: "Sakarya", query: "Sakarya", country: "Turkey" },
+            { name: "Samsun", query: "Samsun", country: "Turkey" },
+            { name: "Siirt", query: "Siirt", country: "Turkey" },
+            { name: "Sinop", query: "Sinop", country: "Turkey" },
+            { name: "Sivas", query: "Sivas", country: "Turkey" },
+            { name: "Tekirdağ", query: "Tekirdag", country: "Turkey" },
+            { name: "Tokat", query: "Tokat" , country: "Turkey"},
+            { name: "Trabzon", query: "Trabzon", country: "Turkey" },
+            { name: "Tunceli", query: "Tunceli", country: "Turkey" },
+            { name: "Şanlıurfa", query: "Sanliurfa", country: "Turkey" },
+            { name: "Uşak", query: "Usak", country: "Turkey" },
+            { name: "Van", query: "Van", country: "Turkey" },
+            { name: "Yozgat", query: "Yozgat", country: "Turkey" },
+            { name: "Zonguldak", query: "Zonguldak", country: "Turkey" },
+            { name: "Aksaray", query: "Aksaray", country: "Turkey" },
+            { name: "Bayburt", query: "Bayburt", country: "Turkey" },
+            { name: "Karaman", query: "Karaman", country: "Turkey" },
+            { name: "Kırıkkale", query: "Kirikkale", country: "Turkey" },
+            { name: "Batman", query: "Batman", country: "Turkey" },
+            { name: "Şırnak", query: "Sirnak", country: "Turkey" },
+            { name: "Bartın", query: "Bartin", country: "Turkey" },
+            { name: "Ardahan", query: "Ardahan", country: "Turkey" },
+            { name: "Iğdır", query: "Igdir", country: "Turkey" },
+            { name: "Yalova", query: "Yalova", country: "Turkey" },
+            { name: "Karabük", query: "Karabuk", country: "Turkey" },
+            { name: "Kilis", query: "Kilis", country: "Turkey" },
+            { name: "Osmaniye", query: "Osmaniye", country: "Turkey" },
+            { name: "Düzce", query: "Duzce", country: "Turkey" }
+        ];
+
+        const QUICK_SELECT_CITIES = ["İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Konya", "Mekke"];
+
+        // Dynamic theme styling mappings
+        const THEME_MAP = {
+            Fajr: "from-slate-950 via-[#120f32] to-[#250d32]", // Deep mystic violet
+            Sunrise: "from-[#1d0a3d] via-[#4c1056] to-[#bd2c4c]", // Celestial dawn
+            Dhuhr: "from-[#0275b2] via-[#056396] to-[#044a72]", // Clear intense sky blue
+            Asr: "from-[#090e1a] via-[#5c1e09] to-[#7c2807]", // Deep bronze sunset glow
+            Maghrib: "from-[#08020e] via-[#3d0315] to-[#6d0d29]", // Raspberry twilight dusk
+            Isha: "from-[#010312] via-[#090d1f] to-[#14122d]" // Starry cosmic black/navy
+        };
+
+        // --- APPLICATION STATE ---
+        let state = {
+            selectedCity: { name: "İstanbul", query: "Istanbul", country: "Turkey" },
+            dailyTimings: null,
+            monthlyCalendar: [],
+            activeTab: "times",
+            soundEnabled: true,
+            calcMethod: 13, // Diyanet
+            offsets: {
+                Fajr: 0,
+                Maghrib: 0
+            },
+            currentNextInfo: null,
+            countdownInterval: null,
+            audioCtx: null
+        };
+
+        // --- CORE INITIALIZATION ---
+        // Boot is async: Preferences (native SharedPreferences) loads before UI
+        // so the saved city is already restored by the time we render anything.
+        window.onload = async function() {
+            await loadPreferences();
+            initializeUI();
+            fetchPrayerTimes();
+            startMainClock();
+
+            // Generate visual star elements randomly in header background
+            generateVisualStars();
+        };
+
+        // --- PERSISTENT STORAGE (Capacitor Preferences + localStorage migration) ---
+        // Preferences backs onto Android SharedPreferences — survives app kills,
+        // reboots, and WebView data clearing (only a full "clear app data" wipes it).
+        // A localStorage fallback keeps the app working in plain browser previews.
+        const PrefStore = (function buildPrefStore() {
+            // Capacitor native bridge injects window.Capacitor in the WebView.
+            // registerPlugin returns a proxy whose methods return Promises.
+            let _prefApi = null;
+            function prefApi() {
+                if (_prefApi) return _prefApi;
+                if (typeof window !== "undefined" && window.Capacitor && typeof window.Capacitor.registerPlugin === "function") {
+                    _prefApi = window.Capacitor.registerPlugin("Preferences");
+                }
+                return _prefApi;
+            }
+
+            async function get(key) {
+                const api = prefApi();
+                if (api) {
+                    const { value } = await api.get({ key });
+                    return value;
+                }
+                // Browser fallback
+                return localStorage.getItem(key);
+            }
+
+            async function set(key, value) {
+                const api = prefApi();
+                if (api) {
+                    await api.set({ key, value });
+                } else {
+                    localStorage.setItem(key, value);
+                }
+            }
+
+            async function remove(key) {
+                const api = prefApi();
+                if (api) {
+                    await api.remove({ key });
+                } else {
+                    localStorage.removeItem(key);
+                }
+            }
+
+            return { get, set, remove };
+        })();
+
+        // One-time migration: copy any old localStorage prefs into Preferences,
+        // so users upgrading keep their saved city. Runs once then deletes the marker.
+        async function migrateLegacyLocalStorage() {
+            // If Preferences already has the city, migration already happened.
+            const already = await PrefStore.get("selected_city");
+            if (already !== null && already !== undefined) return;
+
+            // Pull whatever exists in localStorage and seed Preferences.
+            const keys = ["selected_city", "sound_enabled", "calc_method", "offsets"];
+            let migratedAny = false;
+            for (const k of keys) {
+                const legacy = localStorage.getItem(k);
+                if (legacy !== null) {
+                    await PrefStore.set(k, legacy);
+                    migratedAny = true;
+                }
+            }
+            // Leave legacy keys in place (harmless) — Preferences is now source of truth.
+            return migratedAny;
+        }
+
+        async function loadPreferences() {
+            // First-run migration from old localStorage-backed versions.
+            try {
+                await migrateLegacyLocalStorage();
+            } catch (e) {
+                console.warn("Preference migration skipped:", e);
+            }
+
+            const cachedCity = await PrefStore.get("selected_city");
+            if (cachedCity) {
+                try { state.selectedCity = JSON.parse(cachedCity); } catch (e) { /* keep default */ }
+            }
+
+            const cachedSound = await PrefStore.get("sound_enabled");
+            if (cachedSound !== null && cachedSound !== undefined) {
+                state.soundEnabled = JSON.parse(cachedSound);
+            }
+
+            const cachedMethod = await PrefStore.get("calc_method");
+            if (cachedMethod) state.calcMethod = parseInt(cachedMethod);
+
+            const cachedOffsets = await PrefStore.get("offsets");
+            if (cachedOffsets) {
+                try { state.offsets = JSON.parse(cachedOffsets); } catch (e) { /* keep default */ }
+            }
+
+            // Sync Settings UI inputs
+            document.getElementById("settings-sound-toggle").checked = state.soundEnabled;
+            document.getElementById("settings-method").value = state.calcMethod;
+            document.getElementById("offset-fajr").value = state.offsets.Fajr;
+            document.getElementById("offset-maghrib").value = state.offsets.Maghrib;
+            updateSoundIcon();
+
+            // Reflect the restored city in the header so a persisted choice
+            // (e.g. Ankara) is visible immediately on launch, not just after
+            // the next API fetch finishes.
+            const headerCityEl = document.getElementById("header-city");
+            if (headerCityEl && state.selectedCity && state.selectedCity.name) {
+                headerCityEl.innerText = state.selectedCity.name;
+            }
+        }
+
+        // Fire-and-forget persistence: writes are async but callers don't await.
+        // A failed write logs but never breaks UI flow.
+        function savePreferences() {
+            const writes = [
+                PrefStore.set("selected_city", JSON.stringify(state.selectedCity)),
+                PrefStore.set("sound_enabled", JSON.stringify(state.soundEnabled)),
+                PrefStore.set("calc_method", JSON.stringify(state.calcMethod)),
+                PrefStore.set("offsets", JSON.stringify(state.offsets))
+            ];
+            Promise.all(writes).catch(err => console.warn("Preference save failed:", err));
+        }
+
+        // --- UI DRAWERS & LISTS ---
+        function initializeUI() {
+            // Render Quick Cities Buttons
+            const quickContainer = document.getElementById("quick-cities");
+            quickContainer.innerHTML = "";
+            QUICK_SELECT_CITIES.forEach(cityName => {
+                const btn = document.createElement("button");
+                btn.className = "px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-xs font-semibold text-white/80 border border-white/5 transition-all";
+                btn.innerText = cityName;
+                btn.onclick = () => {
+                    let match = TURKISH_CITIES.find(c => c.name.toLowerCase() === cityName.toLowerCase());
+                    if (!match && cityName === "Mekke") {
+                        match = { name: "Mekke", query: "Mecca", country: "Saudi Arabia" };
+                    }
+                    if (match) {
+                        selectCity(match);
+                        toggleCityDrawer(false);
+                    }
+                };
+                quickContainer.appendChild(btn);
+            });
+
+            // Pre-populate whole Turkish Cities List in drawer
+            filterCities("");
+        }
+
+        // Generate gentle sparkling stars for evening themes
+        function generateVisualStars() {
+            const starsContainer = document.getElementById("stars-container");
+            starsContainer.innerHTML = "";
+            for (let i = 0; i < 40; i++) {
+                const star = document.createElement("div");
+                star.className = "absolute bg-white rounded-full opacity-30";
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                if (Math.random() > 0.5) {
+                    star.className += " animate-pulse";
+                    star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                }
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // --- SEARCH CITY FUNCTIONS ---
+        function filterCities(searchTerm) {
+            const listContainer = document.getElementById("filtered-city-list");
+            listContainer.innerHTML = "";
+            
+            const normalizedSearch = searchTerm.toLocaleLowerCase('tr').trim();
+            
+            // Filter list
+            const filtered = TURKISH_CITIES.filter(city => 
+                city.name.toLocaleLowerCase('tr').includes(normalizedSearch)
+            );
+
+            // Display "Global Search option" if query not found in Turkish base
+            const globalBtn = document.getElementById("global-search-btn");
+            if (filtered.length === 0 && searchTerm.length > 2) {
+                globalBtn.classList.remove("hidden");
+            } else {
+                globalBtn.classList.add("hidden");
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-8 text-white/30 text-xs">
+                        Aradığınız şehir bulunamadı.<br>Global arama yapmayı deneyebilirsiniz.
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(city => {
+                const row = document.createElement("button");
+                row.className = "w-full text-left px-4 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 active:scale-[0.99] transition border border-white/5 flex justify-between items-center";
+                row.innerHTML = `
+                    <span class="font-medium text-sm">${city.name}</span>
+                    <span class="text-[10px] text-white/40 uppercase tracking-widest">${city.country === 'Turkey' ? 'Türkiye' : city.country}</span>
+                `;
+                row.onclick = () => {
+                    selectCity(city);
+                    toggleCityDrawer(false);
+                };
+                listContainer.appendChild(row);
+            });
+        }
+
+        function triggerGlobalSearch() {
+            const inputVal = document.getElementById("city-search").value.trim();
+            if (inputVal.length < 3) {
+                showToast("Lütfen en az 3 harfli bir global şehir adı girin.");
+                return;
+            }
+            
+            // Format global city object
+            const cleanQuery = inputVal.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // strip accents
+            const globalCity = {
+                name: inputVal,
+                query: cleanQuery,
+                country: "" // Aladhan can search without country or resolved on lookup
+            };
+            
+            selectCity(globalCity);
+            toggleCityDrawer(false);
+            showToast(`${inputVal} için global arama yapılıyor...`);
+        }
+
+        // Choose City Action
+        function selectCity(cityObj) {
+            state.selectedCity = cityObj;
+            document.getElementById("header-city").innerText = cityObj.name;
+            savePreferences();
+            fetchPrayerTimes();
+            showToast(`${cityObj.name} başarıyla seçildi.`);
+        }
+
+        // --- MODAL DRAWER VISIBILITY ---
+        function toggleCityDrawer(show) {
+            const drawer = document.getElementById("city-drawer");
+            const searchInput = document.getElementById("city-search");
+            if (show) {
+                drawer.classList.remove("translate-y-full");
+                searchInput.value = "";
+                filterCities("");
+                setTimeout(() => searchInput.focus(), 150);
+            } else {
+                drawer.classList.add("translate-y-full");
+                searchInput.blur();
+            }
+        }
+
+        // --- API DATA CALLS ---
+        async function fetchPrayerTimes(retries = 3, delay = 1000) {
+            const { query, country } = state.selectedCity;
+            
+            // Show Shimmer state or placeholder
+            document.getElementById("header-hijri").innerText = "Güncelleniyor...";
+            
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const dateStr = `${day}-${month}-${year}`;
+            
+            // Build Offline cache key based on day, city, method
+            const cacheKey = `vakit_${query}_${dateStr}_m${state.calcMethod}`;
+            const cachedData = getLocalCache(cacheKey);
+
+            if (cachedData) {
+                processAndRenderDailyTimes(cachedData);
+                fetchMonthlyCalendar(); // load calendar parallel
+                return;
+            }
+
+            try {
+                // Fetch prayer times by city
+                const url = `https://api.aladhan.com/v1/timingsByCity/${dateStr}?city=${encodeURIComponent(query)}&country=${encodeURIComponent(country || 'Turkey')}&method=${state.calcMethod}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Ağ hatası");
+                const resJson = await response.json();
+                
+                if (resJson && resJson.code === 200) {
+                    const data = resJson.data;
+                    setLocalCache(cacheKey, data);
+                    processAndRenderDailyTimes(data);
+                } else {
+                    throw new Error("Geçersiz API verisi");
+                }
+            } catch (err) {
+                console.warn(`Fetch daily error. Retries left: ${retries}. Retrying in ${delay}ms...`, err);
+                if (retries > 0) {
+                    setTimeout(() => fetchPrayerTimes(retries - 1, delay * 2), delay);
+                } else {
+                    showToast("Vakitler güncellenemedi! İnternet bağlantınızı kontrol edin.");
+                    document.getElementById("header-hijri").innerText = "Yükleme Hatası";
+                }
+            }
+
+            fetchMonthlyCalendar();
+        }
+
+        // Fetch entire monthly calendar to display on calendar view
+        async function fetchMonthlyCalendar(retries = 3, delay = 1000) {
+            const { query, country } = state.selectedCity;
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+
+            const cacheKey = `vakit_calendar_${query}_${year}_${month}_m${state.calcMethod}`;
+            const cachedData = getLocalCache(cacheKey);
+
+            if (cachedData) {
+                renderMonthlyCalendar(cachedData);
+                return;
+            }
+
+            try {
+                const url = `https://api.aladhan.com/v1/calendarByCity/${year}/${month}?city=${encodeURIComponent(query)}&country=${encodeURIComponent(country || 'Turkey')}&method=${state.calcMethod}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Ağ hatası");
+                const resJson = await response.json();
+
+                if (resJson && resJson.code === 200) {
+                    const calendarData = resJson.data;
+                    setLocalCache(cacheKey, calendarData);
+                    renderMonthlyCalendar(calendarData);
+                }
+            } catch (err) {
+                console.warn(`Fetch calendar error. Retries left: ${retries}. Retrying in ${delay}ms...`, err);
+                if (retries > 0) {
+                    setTimeout(() => fetchMonthlyCalendar(retries - 1, delay * 2), delay);
+                }
+            }
+        }
+
+        // --- PROCESS & RENDERING ---
+        function processAndRenderDailyTimes(data) {
+            state.dailyTimings = data.timings;
+
+            // Set Hijri date in header
+            const hijri = data.date.hijri;
+            document.getElementById("header-hijri").innerText = `${hijri.day} ${hijri.month.tr || hijri.month.en} ${hijri.year} AH`;
+
+            // Display raw times inside grid
+            const keys = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+            keys.forEach(key => {
+                let timeStr = state.dailyTimings[key];
+                
+                // Apply manual offset adjustment
+                if (state.offsets[key]) {
+                    timeStr = adjustTimeWithOffset(timeStr, state.offsets[key]);
+                }
+
+                document.getElementById(`time-${key}`).innerText = timeStr;
+            });
+
+            // Start countdown calculations
+            updateCountdownAndActiveState();
+        }
+
+        // Helpers to adjust time by offsets
+        function adjustTimeWithOffset(timeStr, offsetMins) {
+            if (!offsetMins) return timeStr;
+            const [h, m] = timeStr.split(':').map(Number);
+            let date = new Date();
+            date.setHours(h);
+            date.setMinutes(m + parseInt(offsetMins));
+            
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function renderMonthlyCalendar(calendarData) {
+            state.monthlyCalendar = calendarData;
+            const tbody = document.getElementById("calendar-table-body");
+            tbody.innerHTML = "";
+
+            const today = new Date();
+            const currentDay = today.getDate();
+
+            // Subtitle header
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            document.getElementById("calendar-subtitle").innerText = `${monthNames[today.getMonth()]} ${today.getFullYear()} İmsakiye Vakitleri`;
+
+            calendarData.forEach(dayItem => {
+                const dayNum = parseInt(dayItem.date.gregorian.day);
+                const isToday = dayNum === currentDay;
+                
+                const tr = document.createElement("tr");
+                if (isToday) {
+                    tr.className = "bg-amber-400/20 font-bold border-l-4 border-amber-400 text-white";
+                } else {
+                    tr.className = "hover:bg-white/5";
+                }
+
+                // Get adjusted times
+                const getAdjusted = (key, rawVal) => {
+                    return state.offsets[key] ? adjustTimeWithOffset(rawVal, state.offsets[key]) : rawVal;
+                };
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-center ${isToday ? 'text-amber-300' : 'text-white/50'} font-mono">${dayNum}</td>
+                    <td class="py-3 px-2">${getAdjusted('Fajr', dayItem.timings.Fajr.split(' ')[0])}</td>
+                    <td class="py-3 px-2 text-white/70">${dayItem.timings.Sunrise.split(' ')[0]}</td>
+                    <td class="py-3 px-2">${dayItem.timings.Dhuhr.split(' ')[0]}</td>
+                    <td class="py-3 px-2">${dayItem.timings.Asr.split(' ')[0]}</td>
+                    <td class="py-3 px-2">${getAdjusted('Maghrib', dayItem.timings.Maghrib.split(' ')[0])}</td>
+                    <td class="py-3 px-2">${dayItem.timings.Isha.split(' ')[0]}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- REALTIME TIME TICKER ---
+        function startMainClock() {
+            setInterval(() => {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                
+                document.getElementById("clock-display").innerText = `${h}:${m}:${s}`;
+                
+                // Format Gregorian date turkish
+                const trOptions = { day: 'numeric', month: 'long', weekday: 'long' };
+                document.getElementById("gregorian-date").innerText = now.toLocaleDateString('tr-TR', trOptions);
+
+                // Run countdown & visual active updater
+                if (state.dailyTimings) {
+                    updateCountdownAndActiveState();
+                }
+            }, 1000);
+        }
+
+        // Main algorithm to calculate active prayer period and next countdown timer
+        function updateCountdownAndActiveState() {
+            if (!state.dailyTimings) return;
+
+            const now = new Date();
+            const currentSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+            const prayerMeta = [
+                { id: "Fajr", name: "İmsak" },
+                { id: "Sunrise", name: "Güneş" },
+                { id: "Dhuhr", name: "Öğle" },
+                { id: "Asr", name: "İkindi" },
+                { id: "Maghrib", name: "Akşam" },
+                { id: "Isha", name: "Yatsı" }
+            ];
+
+            // Resolve exact adjusted times in seconds from midnight
+            const timesInSecs = prayerMeta.map(meta => {
+                let tStr = state.dailyTimings[meta.id];
+                if (state.offsets[meta.id]) {
+                    tStr = adjustTimeWithOffset(tStr, state.offsets[meta.id]);
+                }
+                const [h, m] = tStr.split(':').map(Number);
+                const sTotal = h * 3600 + m * 60;
+                return { ...meta, sTotal, tStr };
+            });
+
+            let activeIdx = 5; // Default overnight to Isha
+            let nextIdx = 0;   // Default next to Fajr
+
+            for (let i = 0; i < timesInSecs.length; i++) {
+                const curr = timesInSecs[i];
+                const next = timesInSecs[(i + 1) % timesInSecs.length];
+
+                if (i < timesInSecs.length - 1) {
+                    if (currentSecs >= curr.sTotal && currentSecs < next.sTotal) {
+                        activeIdx = i;
+                        nextIdx = i + 1;
+                        break;
+                    }
+                } else {
+                    // Isha to Fajr overnight transition
+                    if (currentSecs >= curr.sTotal || currentSecs < timesInSecs[0].sTotal) {
+                        activeIdx = 5;
+                        nextIdx = 0;
+                        break;
+                    }
+                }
+            }
+
+            const activePrayer = timesInSecs[activeIdx];
+            const nextPrayer = timesInSecs[nextIdx];
+
+            // Calculate countdown seconds
+            let diffSecs = 0;
+            if (nextIdx === 0) {
+                // Countdown to tomorrow Fajr
+                if (currentSecs >= timesInSecs[5].sTotal) {
+                    diffSecs = (24 * 3600 - currentSecs) + timesInSecs[0].sTotal;
+                } else {
+                    diffSecs = timesInSecs[0].sTotal - currentSecs;
+                }
+            } else {
+                diffSecs = nextPrayer.sTotal - currentSecs;
+            }
+
+            // Visual active card borders & glow highlighting
+            prayerMeta.forEach(meta => {
+                const card = document.getElementById(`card-${meta.id}`);
+                const badge = document.getElementById(`badge-${meta.id}`);
+                
+                if (meta.id === activePrayer.id) {
+                    card.className = "relative overflow-hidden rounded-2xl border-2 border-amber-400 bg-white/10 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 scale-[1.03] shadow-[0_0_20px_rgba(251,191,36,0.15)] z-10";
+                    badge.classList.remove("opacity-0");
+                    badge.classList.add("opacity-100");
+                } else {
+                    card.className = "relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md p-4 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] scale-100 shadow-none z-0";
+                    badge.classList.remove("opacity-100");
+                    badge.classList.add("opacity-0");
+                }
+            });
+
+            // Set Countdown text
+            const countdownEl = document.getElementById("countdown-timer");
+            const hoursLeft = Math.floor(diffSecs / 3600);
+            const minsLeft = Math.floor((diffSecs % 3600) / 60);
+            const secsLeft = diffSecs % 60;
+            
+            countdownEl.innerText = `${String(hoursLeft).padStart(2, '0')}:${String(minsLeft).padStart(2, '0')}:${String(secsLeft).padStart(2, '0')}`;
+            document.getElementById("next-prayer-label").innerText = `${nextPrayer.name}'e Kalan Süre`;
+
+            // Interval progress calculations (progress bar)
+            let totalPeriodSecs = 0;
+            let elapsedPeriodSecs = 0;
+
+            if (nextIdx === 0) {
+                // Isha -> Fajr period
+                const ishaSecs = timesInSecs[5].sTotal;
+                const fajrSecs = timesInSecs[0].sTotal;
+                totalPeriodSecs = (24 * 3600 - ishaSecs) + fajrSecs;
+                if (currentSecs >= ishaSecs) {
+                    elapsedPeriodSecs = currentSecs - ishaSecs;
+                } else {
+                    elapsedPeriodSecs = (24 * 3600 - ishaSecs) + currentSecs;
+                }
+            } else {
+                totalPeriodSecs = nextPrayer.sTotal - activePrayer.sTotal;
+                elapsedPeriodSecs = currentSecs - activePrayer.sTotal;
+            }
+
+            const progressPct = Math.min(100, Math.max(0, (elapsedPeriodSecs / totalPeriodSecs) * 100));
+            document.getElementById("progress-bar-fill").style.width = `${progressPct}%`;
+            document.getElementById("progress-percent").innerText = `${Math.round(progressPct)}%`;
+            document.getElementById("progress-start").innerText = activePrayer.name;
+            document.getElementById("progress-end").innerText = nextPrayer.name;
+
+            // Trigger dynamic background color change based on active prayer theme
+            updateBodyGradientTheme(activePrayer.id);
+
+            // Handle chime trigger at 0 seconds
+            if (diffSecs === 0 && state.soundEnabled) {
+                playAtmosphericChime();
+                showToast(`Ezan Vakti: ${nextPrayer.name} vakti girdi.`);
+            }
+        }
+
+        // --- GRADIENT AMBIENT CONTROL ---
+        function updateBodyGradientTheme(activePrayerId) {
+            const bodyClass = document.body;
+            const container = bodyClass.querySelector('.max-w-md'); // Target our responsive phone container
+            
+            const selectedGradient = THEME_MAP[activePrayerId] || THEME_MAP.Isha;
+            
+            // Seamless background styling change on phone shell wrapper
+            container.style.background = `linear-gradient(to bottom, ${selectedGradient.split(' ')[1]}, ${selectedGradient.split(' ')[3] || '#020617'})`;
+        }
+
+        // --- SOUND SYSTEM & CHIME SYNTH ---
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            savePreferences();
+            updateSoundIcon();
+            showToast(state.soundEnabled ? "Sesli bildirimler etkin." : "Sesli bildirimler kapatıldı.");
+        }
+
+        function toggleSoundCheckbox() {
+            state.soundEnabled = document.getElementById("settings-sound-toggle").checked;
+            savePreferences();
+            updateSoundIcon();
+        }
+
+        function updateSoundIcon() {
+            const onIcon = document.getElementById("sound-icon-on");
+            const offIcon = document.getElementById("sound-icon-off");
+            const settingsToggle = document.getElementById("settings-sound-toggle");
+
+            if (state.soundEnabled) {
+                onIcon.classList.remove("hidden");
+                offIcon.classList.add("hidden");
+                if (settingsToggle) settingsToggle.checked = true;
+            } else {
+                onIcon.classList.add("hidden");
+                offIcon.classList.remove("hidden");
+                if (settingsToggle) settingsToggle.checked = false;
+            }
+        }
+
+        function testAudioChime() {
+            playAtmosphericChime();
+            showToast("Hafif gong sesi simüle ediliyor...");
+        }
+
+        // Synthesize a beautiful, high-quality spiritual gong chime offline
+        function playAtmosphericChime() {
+            try {
+                if (!state.audioCtx) {
+                    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (state.audioCtx.state === 'suspended') {
+                    state.audioCtx.resume();
+                }
+
+                const ctx = state.audioCtx;
+                const now = ctx.currentTime;
+
+                // Generator helper to trigger specific clean sine waves & harmonics
+                const strikeBellHarmonic = (freq, start, duration, vol) => {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(freq, start);
+                    
+                    gainNode.gain.setValueAtTime(0, start);
+                    gainNode.gain.linearRampToValueAtTime(vol, start + 0.08); // exponential attack fade
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    
+                    osc.start(start);
+                    osc.stop(start + duration + 0.5);
+                };
+
+                // Produce beautiful melodic ambient chime (major root triad)
+                strikeBellHarmonic(261.63, now, 3.5, 0.16);       // C4 fundamental
+                strikeBellHarmonic(329.63, now + 0.3, 3.0, 0.12); // E4
+                strikeBellHarmonic(392.00, now + 0.6, 2.5, 0.12); // G4
+                strikeBellHarmonic(523.25, now + 1.0, 2.0, 0.08); // C5 octave
+                
+            } catch (error) {
+                console.error("Audio Synthesis error: ", error);
+            }
+        }
+
+        // --- NAVIGATION TABS ---
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            const views = ["times", "calendar", "settings"];
+            
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const tabBtn = document.getElementById(`tab-${v}`);
+                
+                if (v === tabId) {
+                    el.classList.remove("hidden");
+                    tabBtn.className = "flex flex-col items-center space-y-1 transition text-amber-400";
+                } else {
+                    el.classList.add("hidden");
+                    tabBtn.className = "flex flex-col items-center space-y-1 transition text-white/40 hover:text-white/80";
+                }
+            });
+        }
+
+        // --- MANAGE OFFSHEETS AND CACHE ---
+        function changeCalcMethod(val) {
+            state.calcMethod = parseInt(val);
+            savePreferences();
+            fetchPrayerTimes();
+            showToast("Hesaplama yöntemi güncellendi.");
+        }
+
+        function saveOffset(field, val) {
+            state.offsets[field] = parseInt(val) || 0;
+            savePreferences();
+            fetchPrayerTimes();
+            showToast("İnce ayar kaydedildi ve uygulandı.");
+        }
+
+        // --- CACHING STRATEGY ---
+        function setLocalCache(key, data) {
+            localStorage.setItem(key, JSON.stringify({
+                timestamp: Date.now(),
+                data: data
+            }));
+        }
+
+        function getLocalCache(key) {
+            const cache = localStorage.getItem(key);
+            if (!cache) return null;
+            const parsed = JSON.parse(cache);
+            
+            // Valid if cached within last 12 hours
+            if (Date.now() - parsed.timestamp < 12 * 3600 * 1000) {
+                return parsed.data;
+            }
+            return null;
+        }
+
+        function clearCache() {
+            // Remove cached daily & calendar timings
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key.startsWith("vakit_")) {
+                    localStorage.removeItem(key);
+                }
+            }
+            showToast("Önbellek temizlendi, yeniden çekiliyor...");
+            fetchPrayerTimes();
+        }
+
+        // Custom clean Toast feedback instead of alerts
+        function showToast(message) {
+            const toast = document.getElementById("toast-notification");
+            const textEl = document.getElementById("toast-text");
+            
+            textEl.innerText = message;
+            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0", "pointer-events-none");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

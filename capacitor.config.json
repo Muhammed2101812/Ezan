@@ -1,0 +1,12 @@
+{
+  "appId": "com.ezan.vakit",
+  "appName": "Vakit",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

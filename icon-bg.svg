@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGrad" cx="38%" cy="26%" r="92%">
+      <stop offset="0%" stop-color="#241E55"/>
+      <stop offset="42%" stop-color="#0E0B22"/>
+      <stop offset="100%" stop-color="#040308"/>
+    </radialGradient>
+  </defs>
+  <!-- Solid gradient background for Android adaptive icon background layer -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bgGrad)"/>
+</svg>
